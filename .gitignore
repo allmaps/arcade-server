@@ -1,0 +1,4 @@
+files/*
+!files/README.md
+
+node_modules
