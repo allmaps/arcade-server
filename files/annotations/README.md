@@ -1,0 +1,1 @@
+This directory will hold Georeference Annotations used by Allmaps Arcade. These files are based on the annotations from [`../../annotations.json`](../../annotations.json) and updated to use a local copy of the IIIF images.
