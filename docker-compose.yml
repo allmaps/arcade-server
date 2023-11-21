@@ -1,0 +1,10 @@
+version: '3'
+services:
+  caddy:
+    build: .
+    ports:
+      - '80:80'
+    volumes:
+      - ./files:/var/www
+      - ./../arcade/build:/var/www/arcade
+      - ./Caddyfile:/etc/caddy/Caddyfile

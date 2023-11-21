@@ -1,0 +1,79 @@
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@allmaps/annotation':
+    specifier: 1.0.0-beta.15
+    version: 1.0.0-beta.15
+  '@allmaps/id':
+    specifier: 1.0.0-beta.16
+    version: 1.0.0-beta.16
+  '@allmaps/iiif-parser':
+    specifier: 1.0.0-beta.25
+    version: 1.0.0-beta.25
+  '@allmaps/stdlib':
+    specifier: 1.0.0-beta.11
+    version: 1.0.0-beta.11
+  chalk:
+    specifier: ^5.3.0
+    version: 5.3.0
+  mkdirp:
+    specifier: ^3.0.1
+    version: 3.0.1
+
+devDependencies:
+  '@types/node':
+    specifier: ^20.5.7
+    version: 20.5.7
+
+packages:
+
+  /@allmaps/annotation@1.0.0-beta.15:
+    resolution: {integrity: sha512-7owko/MMObZQxMQ7SgAvxJADUIxUqYNNbENXjwUNb0lAW3R6RHidmK+9ciCQNNAnYaASnOeQnmTLpp7h9OyxEw==}
+    dependencies:
+      zod: 3.22.2
+    dev: false
+
+  /@allmaps/id@1.0.0-beta.16:
+    resolution: {integrity: sha512-06ZTZnlQSmCaRMSQSv5xDRofaSzmR+m5vBHTx77bJalT8/K4WMqTNwyaHVqkPTIaSpxYt0sW0vNKNllkBSWOpw==}
+    dev: false
+
+  /@allmaps/iiif-parser@1.0.0-beta.25:
+    resolution: {integrity: sha512-tZ6B80vGI40TZ4QpoP0gAFn6DdK4RN+9K3iAxsg8Tj0eK6WtF5ouzt7BSb2MFzkpxpX6Qwx1I1Pp0H+YFGUWYg==}
+    dependencies:
+      zod: 3.22.2
+    dev: false
+
+  /@allmaps/stdlib@1.0.0-beta.11:
+    resolution: {integrity: sha512-yt4F6vAz2F5GUxVG/91QiYp/LN8TSRoANqJ0qVB11k87n1EbUJr/2/VS17Exm4jaEP6Y6mgxFpaWCg6HNbqHWA==}
+    dependencies:
+      '@allmaps/annotation': 1.0.0-beta.15
+      '@allmaps/iiif-parser': 1.0.0-beta.25
+      '@allmaps/types': 1.0.0-beta.3
+    dev: false
+
+  /@allmaps/types@1.0.0-beta.3:
+    resolution: {integrity: sha512-+eiWz9ijnvtIqSld4oHZF83epoo0evkkaToZ2vXUHKP/gnvn7KOG9K3D69uydIkg1pf82Izkh3t8rfCjmIzpaw==}
+    dev: false
+
+  /@types/node@20.5.7:
+    resolution: {integrity: sha512-dP7f3LdZIysZnmvP3ANJYTSwg+wLLl8p7RqniVlV7j+oXSXAbt9h0WIBFmJy5inWZoX9wZN6eXx+YXd9Rh3RBA==}
+    dev: true
+
+  /chalk@5.3.0:
+    resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+    dev: false
+
+  /mkdirp@3.0.1:
+    resolution: {integrity: sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: false
+
+  /zod@3.22.2:
+    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+    dev: false

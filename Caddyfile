@@ -1,0 +1,38 @@
+{
+  order pmtiles_proxy before reverse_proxy
+  auto_https off
+}
+
+:80 {
+  header {
+		Access-Control-Allow-Origin *
+		Access-Control-Allow-Credentials true
+		Access-Control-Allow-Methods *
+		Access-Control-Allow-Headers *
+	}
+
+  handle_path /iiif/* {
+    root * /var/www/iiif
+    file_server browse
+  }
+
+  handle_path /annotations/* {
+    root * /var/www/annotations
+    file_server browse {
+      hide .DS_Store
+    }
+  }
+
+  handle_path /tiles/* {
+    pmtiles_proxy {
+      bucket file:///var/www/pmtiles/
+      cache_size 256
+      public_hostname https://localhost/tiles
+    }
+  }
+
+  handle_path /* {
+    root * /var/www/arcade
+    file_server browse
+  }
+}

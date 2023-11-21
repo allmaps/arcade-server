@@ -1,0 +1,23 @@
+{
+  "name": "arcade-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@allmaps/annotation": "1.0.0-beta.15",
+    "@allmaps/id": "1.0.0-beta.16",
+    "@allmaps/iiif-parser": "1.0.0-beta.25",
+    "@allmaps/stdlib": "1.0.0-beta.11",
+    "chalk": "^5.3.0",
+    "mkdirp": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7"
+  }
+}
