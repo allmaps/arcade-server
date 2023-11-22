@@ -11,17 +11,17 @@
 		Access-Control-Allow-Headers *
 	}
 
-  handle_path /iiif/* {
-    root * /var/www/iiif
-    file_server browse
-  }
+  # handle_path /iiif/* {
+  #   root * /var/www/iiif
+  #   file_server browse
+  # }
 
-  handle_path /annotations/* {
-    root * /var/www/annotations
-    file_server browse {
-      hide .DS_Store
-    }
-  }
+  # handle_path /annotations/* {
+  #   root * /var/www/annotations
+  #   file_server browse {
+  #     hide .DS_Store
+  #   }
+  # }
 
   handle_path /tiles/* {
     pmtiles_proxy {
@@ -32,7 +32,9 @@
   }
 
   handle_path /* {
-    root * /var/www/arcade
-    file_server browse
+    root * /var/www
+    file_server browse {
+      hide .DS_Store README.md
+    }
   }
 }

@@ -15,7 +15,10 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 import annotations from './annotations.json'
 
-for (const annotationUrl of annotations) {
+async function downloadAnnotationAndTiles(
+  annotationUrl: string,
+  annotationFilename: string
+) {
   const annotation = await fetchJson(annotationUrl)
   const maps = parseAnnotation(annotation)
   const map = maps[0]
@@ -34,57 +37,56 @@ for (const annotationUrl of annotations) {
   const imageInfo = await fetchImageInfo(map.resource.id)
   const parsedImage = Image.parse(imageInfo)
 
-  if (fs.existsSync(imageInfoFilename)) {
+  // if (fs.existsSync(imageInfoFilename)) {
+  //   console.log(
+  //     chalk.green('Skipping'),
+  //     chalk.underline(`${map.resource.id}/info.json`)
+  //   )
+  // } else {
+  console.log(
+    chalk.blue('Downloading'),
+    chalk.underline(`${map.resource.id}/info.json`),
+    'to',
+    chalk.green(imageId)
+  )
+
+  for (let [
+    tileZoomLevelIndex,
+    tileZoomLevel
+  ] of parsedImage.tileZoomLevels.entries()) {
     console.log(
-      chalk.green('Skipping'),
-      chalk.underline(`${map.resource.id}/info.json`)
+      chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
+      `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
     )
-  } else {
-    console.log(
-      chalk.blue('Downloading'),
-      chalk.underline(`${map.resource.id}/info.json`),
-      'to',
-      chalk.green(imageId)
-    )
+    let fileCount = 1
+    let fileCountTotal = tileZoomLevel.columns * tileZoomLevel.rows
+    for (const column of Array(tileZoomLevel.columns).fill(0).keys()) {
+      for (const row of Array(tileZoomLevel.rows).fill(0).keys()) {
+        const iiifTile = parsedImage.getIiifTile(tileZoomLevel, column, row)
+        const imageUrl = parsedImage.getImageUrl(iiifTile)
 
-    for (let [
-      tileZoomLevelIndex,
-      tileZoomLevel
-    ] of parsedImage.tileZoomLevels.entries()) {
-      console.log(
-        chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
-        `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
-      )
-      let fileCount = 1
-      let fileCountTotal = tileZoomLevel.columns * tileZoomLevel.rows
-      for (const column of Array(tileZoomLevel.columns).fill(0).keys()) {
-        for (const row of Array(tileZoomLevel.rows).fill(0).keys()) {
-          const iiifTile = parsedImage.getIiifTile(tileZoomLevel, column, row)
-          const imageUrl = parsedImage.getImageUrl(iiifTile)
+        const iiifPath = imageUrl.replace(map.resource.id, '')
 
-          const iiifPath = imageUrl.replace(map.resource.id, '')
+        const filename = path.join(
+          __dirname,
+          'files',
+          'iiif',
+          'images',
+          imageId,
+          iiifPath
+        )
 
-          const filename = path.join(
-            __dirname,
-            'files',
-            'iiif',
-            'images',
-            imageId,
-            iiifPath
-          )
+        console.log(`    Downloading ${fileCount} / ${fileCountTotal}`)
 
-          console.log(`    Downloading ${fileCount} / ${fileCountTotal}`)
+        await mkdirp(path.dirname(filename))
 
-          await mkdirp(path.dirname(filename))
-
-          const stream = fs.createWriteStream(filename)
-          const { body } = await fetch(imageUrl)
-          if (body) {
-            await finished(Readable.fromWeb(body).pipe(stream))
-          }
-
-          fileCount++
+        const stream = fs.createWriteStream(filename)
+        const { body } = await fetch(imageUrl)
+        if (body) {
+          await finished(Readable.fromWeb(body as any).pipe(stream))
         }
+
+        fileCount++
       }
     }
   }
@@ -103,7 +105,7 @@ for (const annotationUrl of annotations) {
     '@context': 'http://iiif.io/api/image/2/context.json',
     '@id': newResourceId,
     protocol: 'http://iiif.io/api/image',
-    tiles: imageInfo.tiles,
+    tiles: (imageInfo as any)?.tiles,
     profile: ['http://iiif.io/api/image/2/level0.json'],
     width: parsedImage.width,
     height: parsedImage.height
@@ -115,13 +117,6 @@ for (const annotationUrl of annotations) {
     'utf-8'
   )
 
-  const annotationFilename = path.join(
-    __dirname,
-    'files',
-    'annotations',
-    `${imageId}.json`
-  )
-
   await mkdirp(path.dirname(annotationFilename))
 
   fs.writeFileSync(
@@ -129,4 +124,44 @@ for (const annotationUrl of annotations) {
     JSON.stringify(generateAnnotation(newMap), null, 2),
     'utf-8'
   )
+}
+
+for (const annotationUrl of annotations) {
+  // Annotation URLs MUST be single map URLs, like this:
+  // https://annotations.allmaps.org/maps/16d5862724595677
+  //
+  // This is to ensure that the map ID can be extracted from the URL
+  // without having to download and parse the annotation first.
+  const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
+
+  const mapId = match?.groups?.mapId
+
+  if (!mapId) {
+    console.log(
+      chalk.red('Skipping, not a single map URL:'),
+      chalk.underline(annotationUrl)
+    )
+    continue
+  }
+
+  const annotationFilename = path.join(
+    __dirname,
+    'files',
+    'annotations',
+    `${mapId}.json`
+  )
+
+  if (fs.existsSync(annotationFilename)) {
+    console.log(
+      chalk.green('Skipping, already exists:'),
+      chalk.underline(annotationFilename)
+    )
+    continue
+  }
+
+  try {
+    await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
+  } catch (err) {
+    console.error(chalk.red('Error downloading annotation:'), err.message)
+  }
 }

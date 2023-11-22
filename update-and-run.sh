@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
-cd ~/projects/arcade
+cd ../arcade
 git pull
 
 pnpm run build
 
+cp -r ./dist/* ../arcade-server/files
 
-
-
-# allmaps-arcade.local
+docker-compose up
 
 "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --kiosk
---app=http://allmaps-arcade/
+--app=http://localhost/
