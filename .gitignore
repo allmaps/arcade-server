@@ -1,9 +1,3 @@
-files/annotations/*
-files/iiif/*
-files/pmtiles/*
-
-!files/annotations/README.md
-!files/iiif/README.md
-!files/pmtiles/README.md
+files/*
 
 node_modules

@@ -5,9 +5,9 @@ git pull
 
 pnpm run build
 
-cp -r ./dist/* ../arcade-server/files
+cp -r ./build/* ../arcade-server/files
 
-docker-compose up
+# docker-compose up
 
-"/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --kiosk
---app=http://localhost/
+# "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --kiosk
+# --app=http://localhost/

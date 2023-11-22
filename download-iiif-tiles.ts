@@ -13,7 +13,7 @@ import { Image } from '@allmaps/iiif-parser'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-import annotations from './annotations.json'
+import annotationUrls from './annotations.json'
 
 async function downloadAnnotationAndTiles(
   annotationUrl: string,
@@ -35,6 +35,16 @@ async function downloadAnnotationAndTiles(
   )
 
   const imageInfo = await fetchImageInfo(map.resource.id)
+
+  if (!(imageInfo as any).tiles) {
+    console.log(
+      chalk.red('Skipping'),
+      chalk.underline(`${map.resource.id}/info.json`),
+      'image does not have tiles'
+    )
+    return
+  }
+
   const parsedImage = Image.parse(imageInfo)
 
   // if (fs.existsSync(imageInfoFilename)) {
@@ -126,7 +136,8 @@ async function downloadAnnotationAndTiles(
   )
 }
 
-for (const annotationUrl of annotations) {
+for (const annotationUrl of annotationUrls) {
+  continue
   // Annotation URLs MUST be single map URLs, like this:
   // https://annotations.allmaps.org/maps/16d5862724595677
   //
@@ -163,5 +174,33 @@ for (const annotationUrl of annotations) {
     await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
   } catch (err) {
     console.error(chalk.red('Error downloading annotation:'), err.message)
+  }
+}
+
+const currentMapIds = annotationUrls
+  .map((annotationUrl) => {
+    const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
+    return match?.groups?.mapId
+  })
+  .filter(Boolean)
+
+const annotationsDir = path.join(__dirname, 'files', 'annotations')
+const existingAnnotations = fs
+  .readdirSync(annotationsDir)
+  .filter((file) => file.endsWith('.json'))
+
+for (const existingAnnotation of existingAnnotations) {
+  const mapId = existingAnnotation.replace('.json', '')
+
+  if (!currentMapIds.includes(mapId)) {
+    console.log(
+      chalk.red('Removing'),
+      chalk.underline(existingAnnotation),
+      'because it is no longer in the list of annotations'
+    )
+
+    fs.unlinkSync(path.join(annotationsDir, existingAnnotation))
+
+    // TODO: also remove image, but only if they're not used by any other annotation
   }
 }
