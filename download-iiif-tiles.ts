@@ -9,11 +9,28 @@ import chalk from 'chalk'
 import { generateId } from '@allmaps/id'
 import { parseAnnotation, generateAnnotation } from '@allmaps/annotation'
 import { fetchJson, fetchImageInfo } from '@allmaps/stdlib'
-import { Image } from '@allmaps/iiif-parser'
+import { Image, type ImageRequest } from '@allmaps/iiif-parser'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 import annotationUrls from './annotations.json'
+
+const maxImageDimension = 16_384
+
+function scaleTile(
+  { region, size }: ImageRequest,
+  scale: number
+): ImageRequest {
+  return {
+    region: region && {
+      x: Math.round(region.x / scale),
+      y: Math.round(region.y / scale),
+      width: Math.round(region.width / scale),
+      height: Math.round(region.height / scale)
+    },
+    size
+  }
+}
 
 async function downloadAnnotationAndTiles(
   annotationUrl: string,
@@ -40,6 +57,8 @@ async function downloadAnnotationAndTiles(
     console.log(
       chalk.red('Skipping'),
       chalk.underline(`${map.resource.id}/info.json`),
+      'from',
+      chalk.underline(annotationUrl),
       'image does not have tiles'
     )
     return
@@ -60,44 +79,93 @@ async function downloadAnnotationAndTiles(
     chalk.green(imageId)
   )
 
+  let minScaleFactor: number | undefined
+  let sliceScaleFactors: number | undefined
+
+  if (
+    map.resource.width > maxImageDimension ||
+    map.resource.height > maxImageDimension
+  ) {
+    const minDownScale =
+      Math.max(map.resource.width, map.resource.height) / maxImageDimension
+
+    // round minDownScale to the nearest power of 2
+    minScaleFactor = Math.pow(2, Math.ceil(Math.log2(minDownScale)))
+    sliceScaleFactors = Math.log2(minScaleFactor)
+  }
+
+  console.log(
+    chalk.yellow('  Minimum scaleFactor:'),
+    minScaleFactor ? minScaleFactor : 'none'
+  )
+
+  console.log(
+    'Image dimensions:',
+    `(${map.resource.width}, ${(map.resource.height, minScaleFactor)})`,
+    minScaleFactor
+      ? chalk.green(
+          `(${Math.round(map.resource.width / minScaleFactor)}, ${Math.round(
+            map.resource.height / minScaleFactor
+          )})`
+        )
+      : ''
+  )
+
+  const width = minScaleFactor
+    ? Math.round(parsedImage.width / minScaleFactor)
+    : parsedImage.width
+  const height = minScaleFactor
+    ? Math.round(parsedImage.height / minScaleFactor)
+    : parsedImage.height
+
   for (let [
     tileZoomLevelIndex,
     tileZoomLevel
   ] of parsedImage.tileZoomLevels.entries()) {
-    console.log(
-      chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
-      `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
-    )
-    let fileCount = 1
-    let fileCountTotal = tileZoomLevel.columns * tileZoomLevel.rows
-    for (const column of Array(tileZoomLevel.columns).fill(0).keys()) {
-      for (const row of Array(tileZoomLevel.rows).fill(0).keys()) {
-        const iiifTile = parsedImage.getIiifTile(tileZoomLevel, column, row)
-        const imageUrl = parsedImage.getImageUrl(iiifTile)
+    if (!minScaleFactor || tileZoomLevel.scaleFactor >= minScaleFactor) {
+      console.log(
+        chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
+        `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
+      )
+      let fileCount = 1
+      let fileCountTotal = tileZoomLevel.columns * tileZoomLevel.rows
+      for (const column of Array(tileZoomLevel.columns).fill(0).keys()) {
+        for (const row of Array(tileZoomLevel.rows).fill(0).keys()) {
+          const iiifTile = parsedImage.getIiifTile(tileZoomLevel, column, row)
+          const imageUrl = parsedImage.getImageUrl(iiifTile)
 
-        const iiifPath = imageUrl.replace(map.resource.id, '')
+          const scaledIiifTile = scaleTile(iiifTile, minScaleFactor || 1)
+          const scaledIiifPath = parsedImage
+            .getImageUrl(scaledIiifTile)
+            .replace(map.resource.id, '')
 
-        const filename = path.join(
-          __dirname,
-          'files',
-          'iiif',
-          'images',
-          imageId,
-          iiifPath
-        )
+          const filename = path.join(
+            __dirname,
+            'files',
+            'iiif',
+            'images',
+            imageId,
+            scaledIiifPath
+          )
 
-        console.log(`    Downloading ${fileCount} / ${fileCountTotal}`)
+          console.log(`    Downloading ${fileCount} / ${fileCountTotal}`)
 
-        await mkdirp(path.dirname(filename))
+          await mkdirp(path.dirname(filename))
 
-        const stream = fs.createWriteStream(filename)
-        const { body } = await fetch(imageUrl)
-        if (body) {
-          await finished(Readable.fromWeb(body as any).pipe(stream))
+          const stream = fs.createWriteStream(filename)
+          const { body } = await fetch(imageUrl)
+          if (body) {
+            await finished(Readable.fromWeb(body as any).pipe(stream))
+          }
+
+          fileCount++
         }
-
-        fileCount++
       }
+    } else {
+      console.log(
+        chalk.blue(`  Skipping scale factor ${tileZoomLevel.scaleFactor}`),
+        `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
+      )
     }
   }
 
@@ -115,10 +183,16 @@ async function downloadAnnotationAndTiles(
     '@context': 'http://iiif.io/api/image/2/context.json',
     '@id': newResourceId,
     protocol: 'http://iiif.io/api/image',
-    tiles: (imageInfo as any)?.tiles,
+    tiles: (imageInfo as any)?.tiles.map(({ width, height, scaleFactors }) => ({
+      width,
+      height,
+      scaleFactors: sliceScaleFactors
+        ? scaleFactors.slice(0, -sliceScaleFactors)
+        : scaleFactors
+    })),
     profile: ['http://iiif.io/api/image/2/level0.json'],
-    width: parsedImage.width,
-    height: parsedImage.height
+    width,
+    height
   }
 
   fs.writeFileSync(
@@ -137,7 +211,6 @@ async function downloadAnnotationAndTiles(
 }
 
 for (const annotationUrl of annotationUrls) {
-  continue
   // Annotation URLs MUST be single map URLs, like this:
   // https://annotations.allmaps.org/maps/16d5862724595677
   //
@@ -173,7 +246,7 @@ for (const annotationUrl of annotationUrls) {
   try {
     await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
   } catch (err) {
-    console.error(chalk.red('Error downloading annotation:'), err.message)
+    console.error(chalk.red('Error downloading annotation:'), err.message, err)
   }
 }
 
