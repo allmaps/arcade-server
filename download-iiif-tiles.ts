@@ -101,7 +101,7 @@ async function downloadAnnotationAndTiles(
 
   console.log(
     'Image dimensions:',
-    `(${map.resource.width}, ${(map.resource.height, minScaleFactor)})`,
+    `(${map.resource.width}, ${map.resource.height})`,
     minScaleFactor
       ? chalk.green(
           `(${Math.round(map.resource.width / minScaleFactor)}, ${Math.round(
