@@ -120,6 +120,7 @@ async function downloadAnnotationAndTiles(
     `(${map.resource.width}, ${map.resource.height})`,
     minScaleFactor
       ? chalk.green(
+          'scaling to',
           `(${Math.round(map.resource.width / minScaleFactor)}, ${Math.round(
             map.resource.height / minScaleFactor
           )})`
