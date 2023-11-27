@@ -10,7 +10,7 @@ echo "Starting Docker"
 
 open -a Docker
 
-while (! docker stats --no-stream ); do
+while (! ./check-docker.sh ); do
   # Docker takes a few seconds to initialize
   echo "  Waiting for Docker to launch..."
   sleep 1
