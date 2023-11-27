@@ -5,6 +5,9 @@ cd "$(dirname "$0")"
 ./update-and-build.sh || echo "Failed to build arcade"
 
 open -a Docker
+
+sleep 10
+
 docker-compose up --detach
 
 sleep 10
