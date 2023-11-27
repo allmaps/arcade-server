@@ -6,11 +6,19 @@ cd "$(dirname "$0")"
 
 open -a Docker
 
-sleep 10
+while (! docker stats --no-stream ); do
+  # Docker takes a few seconds to initialize
+  echo "Waiting for Docker to launch..."
+  sleep 1
+done
 
 docker-compose up --detach
 
-sleep 10
+while ! curl http://localhost/
+do
+  echo "Waiting for Caddy server to launch..."
+  sleep 1
+done
 
 open -a "Google Chrome" --args --start-maximized \
   --start-fullscreen --kiosk --app=http://localhost/
