@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-cd ../arcade
-git pull
+cd "$(dirname "$0")"
 
-pnpm run build
+./build.sh || echo "Failed to build arcade"
 
-cp -r ./build/* ../arcade-server/files
+open -a Docker
 
-# docker-compose up
+docker-compose up
 
-# "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" --kiosk
-# --app=http://localhost/
+"/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" \
+  --kiosk --app=http://localhost/
