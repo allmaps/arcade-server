@@ -32,6 +32,32 @@ function scaleTile(
   }
 }
 
+function scaleGcps(
+  gcps: {
+    resource: [number, number]
+    geo: [number, number]
+  }[],
+  scale: number
+): typeof gcps {
+  return gcps.map(({ resource, geo }) => ({
+    resource: [
+      Math.round(resource[0] / scale),
+      Math.round(resource[1] / scale)
+    ],
+    geo
+  }))
+}
+
+function scaleResourceMask(
+  resourceMask: [number, number][],
+  scale: number
+): typeof resourceMask {
+  return resourceMask.map(([x, y]) => [
+    Math.round(x / scale),
+    Math.round(y / scale)
+  ])
+}
+
 function getMaxScaleFactorForTile(
   imageWidth: number,
   imageHeight: number,
@@ -210,6 +236,8 @@ async function downloadAnnotationAndTiles(
 
   const newMap = {
     ...map,
+    gcps: scaleGcps(map.gcps, minScaleFactor || 1),
+    resourceMask: scaleResourceMask(map.resourceMask, minScaleFactor || 1),
     resource: {
       ...map.resource,
       id: newResourceId
