@@ -11,18 +11,6 @@
 		Access-Control-Allow-Headers *
 	}
 
-  # handle_path /iiif/* {
-  #   root * /var/www/iiif
-  #   file_server browse
-  # }
-
-  # handle_path /annotations/* {
-  #   root * /var/www/annotations
-  #   file_server browse {
-  #     hide .DS_Store
-  #   }
-  # }
-
   handle_path /tiles/* {
     pmtiles_proxy {
       bucket file:///var/www/pmtiles/

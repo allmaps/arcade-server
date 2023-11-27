@@ -12,7 +12,7 @@ while (! docker stats --no-stream ); do
   sleep 1
 done
 
-docker-compose up --detach
+docker-compose up --detach --remove-orphans
 
 while ! curl http://localhost/
 do
