@@ -164,9 +164,17 @@ async function downloadAnnotationAndTiles(
           const imageUrl = parsedImage.getImageUrl(iiifTile)
 
           const scaledIiifTile = scaleTile(iiifTile, minScaleFactor || 1)
-          const scaledIiifPath = parsedImage
+
+          const match = parsedImage
             .getImageUrl(scaledIiifTile)
-            .replace(map.resource.id, '')
+            .match(/\d+,\d+,\d+,\d+\/\d+.\d*\/\d\/\w+\.\w+$/)
+
+          if (!match) {
+            console.log('Error:', parsedImage.getImageUrl(scaledIiifTile))
+            continue
+          }
+
+          const scaledIiifPath = match[0]
 
           const filename = path.join(
             __dirname,
