@@ -32,6 +32,24 @@ function scaleTile(
   }
 }
 
+function getMaxScaleFactorForTile(
+  imageWidth: number,
+  imageHeight: number,
+  tileWidth: number,
+  tileHeight: number | undefined
+) {
+  if (!tileHeight) {
+    tileHeight = tileWidth
+  }
+
+  return (
+    2 **
+    Math.ceil(
+      Math.log2(Math.max(imageWidth / tileWidth, imageHeight / tileHeight))
+    )
+  )
+}
+
 async function downloadAnnotationAndTiles(
   annotationUrl: string,
   annotationFilename: string
@@ -80,7 +98,6 @@ async function downloadAnnotationAndTiles(
   )
 
   let minScaleFactor: number | undefined
-  let sliceScaleFactors: number | undefined
 
   if (
     map.resource.width > maxImageDimension ||
@@ -91,7 +108,6 @@ async function downloadAnnotationAndTiles(
 
     // round minDownScale to the nearest power of 2
     minScaleFactor = Math.pow(2, Math.ceil(Math.log2(minDownScale)))
-    sliceScaleFactors = Math.log2(minScaleFactor)
   }
 
   console.log(
@@ -111,18 +127,30 @@ async function downloadAnnotationAndTiles(
       : ''
   )
 
-  const width = minScaleFactor
+  const scaledImageWidth = minScaleFactor
     ? Math.round(parsedImage.width / minScaleFactor)
     : parsedImage.width
-  const height = minScaleFactor
+  const scaledImageHeight = minScaleFactor
     ? Math.round(parsedImage.height / minScaleFactor)
     : parsedImage.height
+
+  console.log('Downloading tiles:')
 
   for (let [
     tileZoomLevelIndex,
     tileZoomLevel
   ] of parsedImage.tileZoomLevels.entries()) {
-    if (!minScaleFactor || tileZoomLevel.scaleFactor >= minScaleFactor) {
+    const maxScaleFactor = getMaxScaleFactorForTile(
+      parsedImage.width,
+      parsedImage.height,
+      tileZoomLevel.width,
+      tileZoomLevel.height
+    )
+
+    if (
+      (!minScaleFactor || tileZoomLevel.scaleFactor >= minScaleFactor) &&
+      tileZoomLevel.scaleFactor <= maxScaleFactor
+    ) {
       console.log(
         chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
         `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
@@ -183,16 +211,26 @@ async function downloadAnnotationAndTiles(
     '@context': 'http://iiif.io/api/image/2/context.json',
     '@id': newResourceId,
     protocol: 'http://iiif.io/api/image',
-    tiles: (imageInfo as any)?.tiles.map(({ width, height, scaleFactors }) => ({
-      width,
-      height,
-      scaleFactors: sliceScaleFactors
-        ? scaleFactors.slice(0, -sliceScaleFactors)
-        : scaleFactors
-    })),
+    // max 8
+    tiles: (imageInfo as any)?.tiles.map(({ width, height, scaleFactors }) => {
+      const maxScaleFactor = getMaxScaleFactorForTile(
+        scaledImageWidth,
+        scaledImageHeight,
+        width,
+        height
+      )
+
+      return {
+        width,
+        height,
+        scaleFactors: scaleFactors.filter(
+          (scaleFactor: number) => scaleFactor <= maxScaleFactor
+        )
+      }
+    }),
     profile: ['http://iiif.io/api/image/2/level0.json'],
-    width,
-    height
+    width: scaledImageWidth,
+    height: scaledImageHeight
   }
 
   fs.writeFileSync(
@@ -209,6 +247,12 @@ async function downloadAnnotationAndTiles(
     'utf-8'
   )
 }
+
+console.log(chalk.blue('Fetching tiles and annotations'))
+console.log(new Date().toLocaleString())
+console.log(
+  chalk.blue('============================================================\n')
+)
 
 for (const annotationUrl of annotationUrls) {
   // Annotation URLs MUST be single map URLs, like this:
