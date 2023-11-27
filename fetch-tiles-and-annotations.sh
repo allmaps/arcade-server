@@ -2,6 +2,6 @@
 
 cd "$(dirname "$0")"
 
-git pull
+git pull || echo "Failed to pull arcade-server"
 
 bun fetch-tiles-and-annotations.ts >> ./files/logs/fetch-tiles-and-annotations.log
