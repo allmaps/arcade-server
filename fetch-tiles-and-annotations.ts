@@ -219,6 +219,7 @@ async function downloadAnnotationAndTiles(
           const { body } = await fetch(imageUrl)
           if (body) {
             await finished(Readable.fromWeb(body as any).pipe(stream))
+            stream.end()
           }
 
           fileCount++
