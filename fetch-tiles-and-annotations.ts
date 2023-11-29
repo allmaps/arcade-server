@@ -215,13 +215,13 @@ async function downloadAnnotationAndTiles(
 
           await mkdirp(path.dirname(filename))
 
-          const stream = fs.createWriteStream(filename)
           const { body } = await fetch(imageUrl)
-          if (body) {
-            await finished(Readable.fromWeb(body as any).pipe(stream))
-          }
 
-          stream.end()
+          if (body) {
+            const stream = fs.createWriteStream(filename)
+            await finished(Readable.fromWeb(body as any).pipe(stream))
+            stream.end()
+          }
 
           fileCount++
         }
@@ -280,9 +280,18 @@ async function downloadAnnotationAndTiles(
 
   await mkdirp(path.dirname(annotationFilename))
 
+  const newAnnotation = {
+    ...generateAnnotation(newMap),
+    arcade: {
+      annotationUrl,
+      imageId: parsedImage.uri,
+      scale: minScaleFactor || 1
+    }
+  }
+
   fs.writeFileSync(
     annotationFilename,
-    JSON.stringify(generateAnnotation(newMap), null, 2),
+    JSON.stringify(newAnnotation, null, 2),
     'utf-8'
   )
 }
