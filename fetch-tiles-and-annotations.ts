@@ -381,8 +381,8 @@ function removeOldAnnotations(annotationUrls: string[]) {
 }
 
 async function run() {
-  processAnnotationUrls(annotationUrls)
-  removeOldAnnotations(annotationUrls)
+  await processAnnotationUrls(annotationUrls)
+  await removeOldAnnotations(annotationUrls)
 }
 
 try {
