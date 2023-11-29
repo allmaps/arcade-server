@@ -293,70 +293,78 @@ console.log(
   chalk.blue('============================================================\n')
 )
 
-for (const annotationUrl of annotationUrls) {
-  // Annotation URLs MUST be single map URLs, like this:
-  // https://annotations.allmaps.org/maps/16d5862724595677
-  //
-  // This is to ensure that the map ID can be extracted from the URL
-  // without having to download and parse the annotation first.
-  const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
+async function run() {
+  for (const annotationUrl of annotationUrls) {
+    // Annotation URLs MUST be single map URLs, like this:
+    // https://annotations.allmaps.org/maps/16d5862724595677
+    //
+    // This is to ensure that the map ID can be extracted from the URL
+    // without having to download and parse the annotation first.
+    const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
 
-  const mapId = match?.groups?.mapId
+    const mapId = match?.groups?.mapId
 
-  if (!mapId) {
-    console.log(
-      chalk.red('Skipping, not a single map URL:'),
-      chalk.underline(annotationUrl)
+    if (!mapId) {
+      console.log(
+        chalk.red('Skipping, not a single map URL:'),
+        chalk.underline(annotationUrl)
+      )
+      continue
+    }
+
+    const annotationFilename = path.join(
+      __dirname,
+      'files',
+      'annotations',
+      `${mapId}.json`
     )
-    continue
+
+    if (fs.existsSync(annotationFilename)) {
+      console.log(
+        chalk.green('Skipping, already exists:'),
+        chalk.underline(annotationFilename)
+      )
+      continue
+    }
+
+    try {
+      await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
+    } catch (err) {
+      console.log(chalk.red('Error downloading annotation:'), err)
+    }
   }
 
-  const annotationFilename = path.join(
-    __dirname,
-    'files',
-    'annotations',
-    `${mapId}.json`
-  )
+  const currentMapIds = annotationUrls
+    .map((annotationUrl) => {
+      const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
+      return match?.groups?.mapId
+    })
+    .filter(Boolean)
 
-  if (fs.existsSync(annotationFilename)) {
-    console.log(
-      chalk.green('Skipping, already exists:'),
-      chalk.underline(annotationFilename)
-    )
-    continue
-  }
+  const annotationsDir = path.join(__dirname, 'files', 'annotations')
+  const existingAnnotations = fs
+    .readdirSync(annotationsDir)
+    .filter((file) => file.endsWith('.json'))
 
-  try {
-    await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
-  } catch (err) {
-    console.error(chalk.red('Error downloading annotation:'), err.message, err)
+  for (const existingAnnotation of existingAnnotations) {
+    const mapId = existingAnnotation.replace('.json', '')
+
+    if (!currentMapIds.includes(mapId)) {
+      console.log(
+        chalk.red('Removing'),
+        chalk.underline(existingAnnotation),
+        'because it is no longer in the list of annotations'
+      )
+
+      fs.unlinkSync(path.join(annotationsDir, existingAnnotation))
+
+      // TODO: also remove image, but only if they're not used by any other annotation
+    }
   }
 }
 
-const currentMapIds = annotationUrls
-  .map((annotationUrl) => {
-    const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
-    return match?.groups?.mapId
-  })
-  .filter(Boolean)
-
-const annotationsDir = path.join(__dirname, 'files', 'annotations')
-const existingAnnotations = fs
-  .readdirSync(annotationsDir)
-  .filter((file) => file.endsWith('.json'))
-
-for (const existingAnnotation of existingAnnotations) {
-  const mapId = existingAnnotation.replace('.json', '')
-
-  if (!currentMapIds.includes(mapId)) {
-    console.log(
-      chalk.red('Removing'),
-      chalk.underline(existingAnnotation),
-      'because it is no longer in the list of annotations'
-    )
-
-    fs.unlinkSync(path.join(annotationsDir, existingAnnotation))
-
-    // TODO: also remove image, but only if they're not used by any other annotation
-  }
+try {
+  await run()
+} catch (err) {
+  console.log(chalk.red('Error running script:'), err)
 }
