@@ -21,6 +21,8 @@
 
   handle_path /* {
     root * /var/www
+  	try_files {path}.html
+
     file_server browse {
       hide .DS_Store README.md
     }
