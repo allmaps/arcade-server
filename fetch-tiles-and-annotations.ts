@@ -70,7 +70,7 @@ function getMaxScaleFactorForTile(
 
   return (
     2 **
-    Math.ceil(
+    Math.floor(
       Math.log2(Math.max(imageWidth / tileWidth, imageHeight / tileHeight))
     )
   )
@@ -143,13 +143,13 @@ async function downloadAnnotationAndTiles(
 
   console.log(
     'Image dimensions:',
-    `(${map.resource.width}, ${map.resource.height})`,
+    `${map.resource.width}, ${map.resource.height}`,
     minScaleFactor
       ? chalk.green(
-          'scaling to',
-          `(${Math.round(map.resource.width / minScaleFactor)}, ${Math.round(
+          '→',
+          `${Math.round(map.resource.width / minScaleFactor)}, ${Math.round(
             map.resource.height / minScaleFactor
-          )})`
+          )}`
         )
       : ''
   )
@@ -180,7 +180,14 @@ async function downloadAnnotationAndTiles(
     ) {
       console.log(
         chalk.blue(`  Scale factor ${tileZoomLevel.scaleFactor}`),
-        `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`
+        `${tileZoomLevelIndex + 1} / ${parsedImage.tileZoomLevels.length}`,
+        minScaleFactor
+          ? chalk.yellow(
+              `${tileZoomLevel.scaleFactor} → ${
+                tileZoomLevel.scaleFactor / minScaleFactor
+              }`
+            )
+          : ''
       )
       let fileCount = 1
       let fileCountTotal = tileZoomLevel.columns * tileZoomLevel.rows
@@ -250,7 +257,6 @@ async function downloadAnnotationAndTiles(
     '@context': 'http://iiif.io/api/image/2/context.json',
     '@id': newResourceId,
     protocol: 'http://iiif.io/api/image',
-    // max 8
     tiles: (imageInfo as any)?.tiles.map(({ width, height, scaleFactors }) => {
       const maxScaleFactor = getMaxScaleFactorForTile(
         scaledImageWidth,
@@ -302,7 +308,7 @@ console.log(
   chalk.blue('============================================================\n')
 )
 
-async function run() {
+async function processAnnotationUrls(annotationUrls: string[]) {
   for (const annotationUrl of annotationUrls) {
     // Annotation URLs MUST be single map URLs, like this:
     // https://annotations.allmaps.org/maps/16d5862724595677
@@ -342,7 +348,9 @@ async function run() {
       console.log(chalk.red('Error downloading annotation:'), err)
     }
   }
+}
 
+function removeOldAnnotations(annotationUrls: string[]) {
   const currentMapIds = annotationUrls
     .map((annotationUrl) => {
       const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
@@ -370,6 +378,11 @@ async function run() {
       // TODO: also remove image, but only if they're not used by any other annotation
     }
   }
+}
+
+async function run() {
+  processAnnotationUrls(annotationUrls)
+  removeOldAnnotations(annotationUrls)
 }
 
 try {
