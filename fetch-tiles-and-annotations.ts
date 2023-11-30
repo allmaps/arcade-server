@@ -1,5 +1,5 @@
 import url from 'url'
-import fs from 'fs'
+import fs from 'graceful-fs'
 import path from 'path'
 import { Readable } from 'stream'
 import { finished } from 'stream/promises'
