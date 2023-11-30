@@ -3,6 +3,8 @@
 cd "$(dirname "$0")"
 
 cd ../arcade
+
+git stash
 git pull
 
 pnpm install

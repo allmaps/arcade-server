@@ -2,6 +2,7 @@
 
 cd "$(dirname "$0")"
 
+git stash
 git pull || echo "Failed to pull arcade-server"
 
 pnpm install
