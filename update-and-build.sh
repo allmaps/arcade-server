@@ -9,10 +9,10 @@ git stash
 git pull
 
 echo "Installing Allmaps Arcade dependencies"
-pnpm install
+npm install
 
 echo "Building Allmaps Arcade"
-pnpm run build
+npm run build
 
 echo "Copying build to arcade-server"
 cp -r ./build/* ../arcade-server/files

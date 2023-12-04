@@ -7,7 +7,7 @@ git stash
 git pull || echo "Failed to pull arcade-server"
 
 echo "Installing arcade-server dependencies"
-pnpm install
+npm install
 
 echo "Running fetch-tiles-and-annotations.ts"
 bun fetch-tiles-and-annotations.ts >> ./files/logs/fetch-tiles-and-annotations.log
