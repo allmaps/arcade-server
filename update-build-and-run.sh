@@ -2,10 +2,6 @@
 
 cd "$(dirname "$0")"
 
-echo "Updating and building Allmaps Arcade"
-
-./update-and-build.sh || echo "Failed to build arcade"
-
 echo "Starting Docker"
 
 open -a Docker
@@ -25,6 +21,10 @@ do
   echo "  Waiting for Caddy server to launch..."
   sleep 1
 done
+
+echo "Updating and building Allmaps Arcade"
+
+./update-and-build.sh || echo "Failed to build arcade"
 
 echo "Starting Google Chrome"
 
