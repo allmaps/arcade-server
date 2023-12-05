@@ -11,8 +11,11 @@
     <key>Label</key>
     <string>org.allmaps.arcade-server.update-build-and-run</string>
 
+    <key>RunAtLoad</key>
+    <true />
+
     <key>StartInterval</key>
-    <integer>10</integer>
+    <integer>20</integer>
 
     <key>StandardErrorPath</key>
     <string>/Users/arcade/projects/arcade-server/files/logs/update-build-and-run.error.log</string>
