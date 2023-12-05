@@ -9,16 +9,10 @@
     </dict>
 
     <key>Label</key>
-    <string>org.allmaps.arcade.server</string>
+    <string>org.allmaps.arcade-server.update-build-and-run</string>
 
-    <key>LaunchOnlyOnce</key>
-    <true />
-
-    <key>UserName</key>
-    <string>arcade</string>
-
-    <key>GroupName</key>
-    <string>staff</string>
+    <key>StartInterval</key>
+    <integer>10</integer>
 
     <key>StandardErrorPath</key>
     <string>/Users/arcade/projects/arcade-server/files/logs/update-build-and-run.error.log</string>
