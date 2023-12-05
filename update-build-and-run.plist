@@ -5,7 +5,7 @@
     <key>EnvironmentVariables</key>
     <dict>
       <key>PATH</key>
-      <string>$PATH:/opt/homebrew/bin:/usr/local/bin</string>
+      <string>/bin:/usr/bin:/usr/local/bin:/opt/homebrew/bin</string>
     </dict>
 
     <key>Label</key>
