@@ -10,4 +10,4 @@ echo "Installing arcade-server dependencies"
 npm install
 
 echo "Running fetch-tiles-and-annotations.ts"
-bun fetch-tiles-and-annotations.ts >> ./files/logs/fetch-tiles-and-annotations.log
+bun fetch-tiles-and-annotations.ts
