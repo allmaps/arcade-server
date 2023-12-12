@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- https://www.manpagez.com/man/5/launchd.plist/ -->
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string>/bin:/usr/bin:/usr/local/bin:/opt/homebrew/bin:/sbin:/usr/sbin</string>
+    </dict>
+
+    <key>Label</key>
+    <string>org.allmaps.arcade-server.fetch-tiles-and-annotations</string>
+
+    <key>RunAtLoad</key>
+    <true />
+
+    <key>LaunchOnlyOnce</key>
+    <true />
+
+    <key>StandardErrorPath</key>
+    <string>/Users/arcade/projects/arcade-server/files/logs/fetch-tiles-and-annotations.error.log</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/arcade/projects/arcade-server/files/logs/fetch-tiles-and-annotations.log</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/arcade/projects/arcade-server/fetch-tiles-and-annotations.sh</string>
+    </array>
+  </dict>
+</plist>
