@@ -1,21 +1,37 @@
 import url from 'url'
 import fs from 'graceful-fs'
 import path from 'path'
+import { parse } from 'yaml'
 import { Readable } from 'stream'
 import { finished } from 'stream/promises'
 import { mkdirp } from 'mkdirp'
 import chalk from 'chalk'
 
-import { generateId } from '@allmaps/id'
-import { parseAnnotation, generateAnnotation } from '@allmaps/annotation'
+import { generateId, generateChecksum } from '@allmaps/id'
+import {
+  parseAnnotation,
+  generateAnnotation,
+  type Map
+} from '@allmaps/annotation'
 import { fetchJson, fetchImageInfo } from '@allmaps/stdlib'
 import { Image, type ImageRequest } from '@allmaps/iiif-parser'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-import annotationUrls from './annotations.json'
+const yamlConfigUrl = process.env.ARCADE_YAML_CONFIG_URL
+
+if (!yamlConfigUrl) {
+  throw new Error('No ARCADE_YAML_CONFIG_URL environment variable set')
+}
 
 const maxImageDimension = 16_384
+
+async function getConfiguration(yamlConfigUrl: string) {
+  const yamlConfig = await fetch(yamlConfigUrl).then((response) =>
+    response.text()
+  )
+  return parse(yamlConfig)
+}
 
 function scaleTile(
   { region, size }: ImageRequest,
@@ -76,13 +92,76 @@ function getMaxScaleFactorForTile(
   )
 }
 
-async function downloadAnnotationAndTiles(
-  annotationUrl: string,
-  annotationFilename: string
-) {
-  const annotation = await fetchJson(annotationUrl)
-  const maps = parseAnnotation(annotation)
-  const map = maps[0]
+/**
+ * Fetches a URL and saves it to  `destinationFilename`.
+ * If the file already exists, loads existing version and returns contents
+ * @param url
+ * @param destinationFilename
+ * @returns The contents of the URL or file
+ */
+async function fetchJsonToFs(url: string, destinationFilename: string) {
+  const fileExists = fs.existsSync(destinationFilename)
+
+  if (fileExists) {
+    console.log(
+      chalk.green('Skipping'),
+      chalk.underline(url),
+      'to',
+      chalk.underline(destinationFilename),
+      chalk.green.bold('loading from disk')
+    )
+    return JSON.parse(fs.readFileSync(destinationFilename, 'utf-8'))
+  } else {
+    console.log(
+      chalk.blue('Downloading'),
+      chalk.underline(url),
+      'to',
+      chalk.underline(destinationFilename)
+    )
+
+    const response = await fetch(url)
+    const json = await response.json()
+
+    await mkdirp(path.dirname(destinationFilename))
+    fs.writeFileSync(
+      destinationFilename,
+      JSON.stringify(json, null, 2),
+      'utf-8'
+    )
+
+    return json
+  }
+}
+
+async function downloadTilesForMap(annotationUrl: string, map: Map) {
+  let mapId = await generateChecksum(map)
+
+  if (map.id?.startsWith('http')) {
+    const match = map.id.match(/maps\/(?<mapId>\w*)$/)
+
+    if (match?.groups?.mapId) {
+      mapId = match?.groups?.mapId
+    }
+  } else if (map.id?.length === 16) {
+    mapId = map.id
+  }
+
+  const singleMapAnnotationFilename = path.join(
+    __dirname,
+    'files',
+    'annotations',
+    'maps',
+    `${mapId}.json`
+  )
+
+  if (fs.existsSync(singleMapAnnotationFilename)) {
+    console.log(
+      chalk.green('Skipping, already exists:'),
+      chalk.underline(singleMapAnnotationFilename)
+    )
+
+    return
+  }
 
   const imageId = await generateId(map.resource.id)
 
@@ -284,19 +363,20 @@ async function downloadAnnotationAndTiles(
     'utf-8'
   )
 
-  await mkdirp(path.dirname(annotationFilename))
+  await mkdirp(path.dirname(singleMapAnnotationFilename))
 
   const newAnnotation = {
     ...generateAnnotation(newMap),
-    arcade: {
+    _arcade: {
       annotationUrl,
+      mapId: map.id,
       imageId: parsedImage.uri,
       scale: minScaleFactor || 1
     }
   }
 
   fs.writeFileSync(
-    annotationFilename,
+    singleMapAnnotationFilename,
     JSON.stringify(newAnnotation, null, 2),
     'utf-8'
   )
@@ -310,40 +390,26 @@ console.log(
 
 async function processAnnotationUrls(annotationUrls: string[]) {
   for (const annotationUrl of annotationUrls) {
-    // Annotation URLs MUST be single map URLs, like this:
-    // https://annotations.allmaps.org/maps/16d5862724595677
-    //
-    // This is to ensure that the map ID can be extracted from the URL
-    // without having to download and parse the annotation first.
-    const match = annotationUrl.match(/maps\/(?<mapId>\w*)$/)
-
-    const mapId = match?.groups?.mapId
-
-    if (!mapId) {
-      console.log(
-        chalk.red('Skipping, not a single map URL:'),
-        chalk.underline(annotationUrl)
-      )
-      continue
-    }
+    const annotationUrlHash = await generateId(annotationUrl)
 
     const annotationFilename = path.join(
       __dirname,
       'files',
       'annotations',
-      `${mapId}.json`
+      `${annotationUrlHash}.json`
     )
 
-    if (fs.existsSync(annotationFilename)) {
-      console.log(
-        chalk.green('Skipping, already exists:'),
-        chalk.underline(annotationFilename)
-      )
-      continue
-    }
-
     try {
-      await downloadAnnotationAndTiles(annotationUrl, annotationFilename)
+      const annotation = await fetchJsonToFs(annotationUrl, annotationFilename)
+      const maps = parseAnnotation(annotation)
+
+      for (const map of maps) {
+        try {
+          await downloadTilesForMap(annotationUrl, map)
+        } catch (err) {
+          console.log(chalk.red('Error downloading tiles for map:'), err)
+        }
+      }
     } catch (err) {
       console.log(chalk.red('Error downloading annotation:'), err)
     }
@@ -380,13 +446,16 @@ function removeOldAnnotations(annotationUrls: string[]) {
   }
 }
 
-async function run() {
+async function run(yamlConfigUrl: string) {
+  const configuration = await getConfiguration(yamlConfigUrl)
+  const annotationUrls = configuration.annotationUrls as string[]
+
   await processAnnotationUrls(annotationUrls)
-  await removeOldAnnotations(annotationUrls)
+  //   await removeOldAnnotations(annotationUrls)
 }
 
 try {
-  await run()
+  await run(yamlConfigUrl)
 } catch (err) {
   console.log(chalk.red('Error running script:'), err)
 }
