@@ -22,6 +22,12 @@ do
   sleep 1
 done
 
+while ! curl https://allmaps.org/
+do
+  echo "  Waiting for internet connection..."
+  sleep 1
+done
+
 echo "Updating and building Allmaps Arcade"
 
 ./update-and-build.sh || echo "Failed to build arcade"

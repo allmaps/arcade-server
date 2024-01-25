@@ -15,5 +15,11 @@ do
   sleep 1
 done
 
+while ! curl https://allmaps.org/
+do
+  echo "  Waiting for internet connection..."
+  sleep 1
+done
+
 echo "Running fetch-tiles-and-annotations.ts"
 bun fetch-tiles-and-annotations.ts
