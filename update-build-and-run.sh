@@ -19,13 +19,13 @@ docker-compose up --detach --remove-orphans
 while ! curl http://localhost/
 do
   echo "  Waiting for Caddy server to launch..."
-  sleep 1
+  sleep 20
 done
 
 while ! curl https://allmaps.org/
 do
   echo "  Waiting for internet connection..."
-  sleep 1
+  sleep 20
 done
 
 echo "Updating and building Allmaps Arcade"
