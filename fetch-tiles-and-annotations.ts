@@ -2,8 +2,6 @@ import url from 'url'
 import fs from 'graceful-fs'
 import path from 'path'
 import { parse } from 'yaml'
-import { Readable } from 'stream'
-import { finished } from 'stream/promises'
 import { mkdirp } from 'mkdirp'
 import chalk from 'chalk'
 
@@ -13,7 +11,7 @@ import {
   generateAnnotation,
   type Map
 } from '@allmaps/annotation'
-import { fetchJson, fetchImageInfo } from '@allmaps/stdlib'
+import { fetchImageInfo } from '@allmaps/stdlib'
 import { Image, type ImageRequest } from '@allmaps/iiif-parser'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
@@ -301,17 +299,9 @@ async function downloadTilesForMap(annotationUrl: string, map: Map) {
 
           await mkdirp(path.dirname(filename))
 
-          // fetch(imageUrl)
-          //   .then((response) => response.arrayBuffer())
-          //   .then((buffer) => fs.writeFileSync(filename, buffer))
-
-          const { body } = await fetch(imageUrl)
-
-          if (body) {
-            const stream = fs.createWriteStream(filename)
-            await finished(Readable.fromWeb(body as any).pipe(stream))
-            stream.end()
-          }
+          await fetch(imageUrl)
+            .then((response) => response.arrayBuffer())
+            .then((buffer) => fs.writeFileSync(filename, buffer))
 
           fileCount++
         }
