@@ -9,17 +9,11 @@ git pull || echo "Failed to pull arcade-server"
 echo "Installing arcade-server dependencies"
 npm install
 
-while ! curl http://localhost/
-do
-  echo "  Waiting for Caddy server to launch..."
-  sleep 20
-done
+# Wait for Caddy server to launch
+./wait-for-website.sh "http://localhost/"
 
-while ! curl https://allmaps.org/
-do
-  echo "  Waiting for internet connection..."
-  sleep 20
-done
+# Wait for internet connection
+./wait-for-website.sh "https://allmaps.org/"
 
 echo "Running fetch-tiles-and-annotations.ts"
 bun fetch-tiles-and-annotations.ts
