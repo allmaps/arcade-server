@@ -301,6 +301,10 @@ async function downloadTilesForMap(annotationUrl: string, map: Map) {
 
           await mkdirp(path.dirname(filename))
 
+          // fetch(imageUrl)
+          //   .then((response) => response.arrayBuffer())
+          //   .then((buffer) => fs.writeFileSync(filename, buffer))
+
           const { body } = await fetch(imageUrl)
 
           if (body) {
@@ -451,6 +455,7 @@ async function run(yamlConfigUrl: string) {
   const annotationUrls = configuration.annotationUrls as string[]
 
   await processAnnotationUrls(annotationUrls)
+  // TODO: re-enable this
   //   await removeOldAnnotations(annotationUrls)
 }
 

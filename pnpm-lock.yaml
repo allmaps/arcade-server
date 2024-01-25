@@ -12,8 +12,8 @@ dependencies:
     specifier: 1.0.0-beta.21
     version: 1.0.0-beta.21
   '@allmaps/iiif-parser':
-    specifier: 1.0.0-beta.29
-    version: 1.0.0-beta.29
+    specifier: 1.0.0-beta.30
+    version: 1.0.0-beta.30
   '@allmaps/stdlib':
     specifier: 1.0.0-beta.18
     version: 1.0.0-beta.18
@@ -50,8 +50,8 @@ packages:
       '@allmaps/types': 1.0.0-beta.7
     dev: false
 
-  /@allmaps/iiif-parser@1.0.0-beta.29:
-    resolution: {integrity: sha512-9yRlneQ7cbuW+7PWU1ta7EqrJzGidjBBvS3cnacy656VOXxjgSFqsI9YeK1kpftdELk2EAah3K8g1NoSqykbAA==}
+  /@allmaps/iiif-parser@1.0.0-beta.30:
+    resolution: {integrity: sha512-f2NlZAwGvnjmfHk6pWtK3zJ2Si90SGE+MDpWDhzQpcotIpX7wk4YDNW1uzBuGtGCj7qjdY4OiXA7XhqSE6H/Xw==}
     dependencies:
       '@allmaps/types': 1.0.0-beta.7
       zod: 3.22.2
@@ -61,7 +61,7 @@ packages:
     resolution: {integrity: sha512-16LqwEhFXYA9ei5PbCoTzS9iIYQDQZP6Lmhe9miOnxUI3D3aDV0pVnBz9Bnwjb/gjCzQfvqk3WkUvdjxxtExLQ==}
     dependencies:
       '@allmaps/annotation': 1.0.0-beta.20
-      '@allmaps/iiif-parser': 1.0.0-beta.29
+      '@allmaps/iiif-parser': 1.0.0-beta.30
       '@allmaps/types': 1.0.0-beta.7
       '@placemarkio/geojson-rewind': 1.0.2
       svg-parser: 2.0.4
