@@ -10,7 +10,7 @@ git stash
 git pull || echo "Failed to pull arcade-server"
 
 echo "Installing arcade-server dependencies"
-npm install
+pnpm install
 
 # Wait for Caddy server to launch
 ./wait-for-website.sh "http://localhost/"
