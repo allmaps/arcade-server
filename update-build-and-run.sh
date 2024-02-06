@@ -28,5 +28,8 @@ echo "Updating and building Allmaps Arcade"
 
 echo "Starting Google Chrome"
 
+# In case windows were accidentally restored
+killall "Google Chrome"
+
 open -a "Google Chrome" --args --start-maximized \
   --start-fullscreen --kiosk --app=http://localhost/
