@@ -31,5 +31,9 @@ echo "Starting Google Chrome"
 # In case windows were accidentally restored
 killall "Google Chrome"
 
+while killall -0 "Google Chrome"; do 
+    sleep 1
+done
+
 open -a "Google Chrome" --args --start-maximized \
   --start-fullscreen --kiosk --app=http://localhost/
