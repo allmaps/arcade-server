@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 echo "Starting Docker"
 
-open -g -a Docker
+open -a Docker
 
 while (! ./check-docker.sh ); do
   # Docker takes a few seconds to initialize
@@ -36,11 +36,4 @@ while killall -0 "Google Chrome"; do
 done
 
 open -a "Google Chrome" --args --start-maximized \
-  --start-fullscreen --kiosk --app=http://localhost/ || exit 1
-
-# open returns before Chrome has created its kiosk window.
-echo "Waiting for and focusing Google Chrome"
-osascript ./focus-chrome.applescript || {
-  echo "Failed to focus Google Chrome; see the startup error log." >&2
-  exit 1
-}
+  --start-fullscreen --kiosk --app=http://localhost/
